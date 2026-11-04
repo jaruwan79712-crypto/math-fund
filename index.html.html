@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบเงินรุ่นคณิตศาสตร์ (122 คน)</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Prompt', sans-serif; }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800 min-h-screen flex flex-col justify-between">
+
+    <header class="bg-indigo-600 text-white shadow-md">
+        <div class="max-w-4xl mx-auto px-4 py-4 flex justify-between items-center">
+            <h1 class="text-xl font-bold">🧮 ระบบเงินรุ่นคณิตศาสตร์ (122 คน)</h1>
+            <div id="user-info-header" class="hidden flex items-center gap-3">
+                <span id="nav-username" class="text-sm bg-indigo-700 px-3 py-1 rounded-full"></span>
+                <button onclick="logout()" class="text-xs bg-red-500 hover:bg-red-600 px-3 py-1 rounded transition text-white">ออกจากระบบ</button>
+            </div>
+        </div>
+    </header>
+
+    <div id="loading-spinner" class="fixed inset-0 bg-black/40 flex items-center justify-center hidden z-50">
+        <div class="bg-white p-5 rounded-xl shadow-lg flex items-center gap-3">
+            <div class="w-6 h-6 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+            <span id="loading-text" class="text-sm font-medium text-gray-700">กำลังเชื่อมต่อฐานข้อมูล...</span>
+        </div>
+    </div>
+
+    <main class="max-w-4xl mx-auto px-4 py-8 flex-grow w-full space-y-6">
+
+        <section id="login-section" class="max-w-md mx-auto bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
+            <div class="text-center mb-6">
+                <h2 class="text-2xl font-bold text-gray-900">เข้าสู่ระบบ</h2>
+                <p class="text-sm text-gray-500 mt-1">กรอกรหัสนักศึกษา 8 หลัก หรือรหัสผู้ดูแลระบบ</p>
+            </div>
+            <form onsubmit="handleLogin(event)" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">รหัสเข้าสู่ระบบ</label>
+                    <input type="password" id="student-id-input" required placeholder="กรอกรหัสของคุณ" 
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                </div>
+                <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2.5 rounded-lg transition">
+                    เข้าสู่ระบบ
+                </button>
+            </form>
+        </section>
+
+        <section id="student-section" class="hidden space-y-6">
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 text-center">
+                <p class="text-sm text-gray-500">💰 เงินทั้งหมดในรุ่นตอนนี้</p>
+                <h3 id="total-fund" class="text-4xl font-bold text-indigo-600 mt-2">0 บาท</h3>
+            </div>
+
+            <div class="payment-section bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col md:flex-row gap-6 items-center">
+                <div class="payment-info flex-1 space-y-2">
+                    <h3 class="text-lg font-bold text-gray-900">🏦 ช่องทางโอนเงินกองกลาง (สมาชิก 122 คน)</h3>
+                    <p class="text-sm text-gray-600"><strong>ธนาคารกรุงไทย (KTB):</strong> 952-0-76600-6</p>
+                    <p class="text-sm text-gray-600"><strong>ชื่อบัญชี:</strong> น.ส.จารุพรรณ สังหนู </p>
+                </div>
+                <div class="qr-container text-center">
+                    <p class="text-xs font-semibold text-gray-500 mb-2"><strong>สแกนเพื่อชำระเงิน</strong></p>
+                    <img src="https://i.postimg.cc/d0rgKY7v/kh-wxar.jpg" alt="QR Code" class="w-48 h-48 border border-gray-200 p-2 rounded-lg bg-gray-50 mx-auto object-cover" />
+                </div>
+            </div>
+
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 space-y-4">
+                <div class="flex justify-between items-center border-b pb-4">
+                    <div>
+                        <h3 id="student-name" class="text-lg font-bold text-gray-900">ชื่อ-นามสกุล</h3>
+                        <p id="student-id-display" class="text-sm text-gray-500">รหัส:</p>
+                    </div>
+                    <div id="payment-status-badge" class="px-3 py-1 rounded-full text-xs font-semibold">สถานะ</div>
+                </div>
+
+                <div class="bg-indigo-50 p-4 rounded-xl space-y-2">
+                    <div class="flex justify-between text-sm">
+                        <span class="text-gray-600">ยอดประจำเดือนนี้:</span>
+                        <span class="font-semibold text-gray-900">50 บาท</span>
+                    </div>
+                    <div class="flex justify-between text-sm">
+                        <span class="text-gray-600">กำหนดชำระฟรีค่าปรับ:</span>
+                        <span class="font-semibold text-gray-900">วันที่ 10 - 17 ของทุกเดือน</span>
+                    </div>
+                    <div class="flex justify-between text-sm border-t border-indigo-100 pt-2">
+                        <span class="text-gray-600 font-medium">ยอดที่ต้องจ่ายรวมค่าปรับ (ถ้ามี):</span>
+                        <span id="calculated-due" class="font-bold text-indigo-600 text-base">50 บาท</span>
+                    </div>
+                    <p id="fine-note" class="text-xs text-red-500 mt-1"></p>
+                </div>
+
+                <div id="upload-box" class="space-y-3 pt-2">
+                    <label class="block text-sm font-medium text-gray-700">ส่งสลิปการโอนเงิน</label>
+                    <div class="flex gap-3">
+                        <input type="file" id="slip-file" accept="image/*" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
+                        <button onclick="submitSlip()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2 rounded-lg text-sm font-medium transition whitespace-nowrap">ยืนยันการโอน</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 space-y-4">
+                <h3 class="font-bold text-gray-900">📜 ประวัติการใช้จ่ายเงินรุ่น</h3>
+                <div class="overflow-x-auto max-h-60 overflow-y-auto">
+                    <table class="w-full text-left text-sm text-gray-600">
+                        <thead class="bg-gray-100 text-gray-700 uppercase text-xs sticky top-0">
+                            <tr>
+                                <th class="p-3">รายการ</th>
+                                <th class="p-3 text-right">จำนวนเงิน (บาท)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="student-expense-table" class="divide-y divide-gray-100"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <section id="treasurer-section" class="hidden space-y-6">
+            <div class="bg-indigo-900 text-white p-6 rounded-2xl flex justify-between items-center">
+                <div>
+                    <h2 class="text-xl font-bold">🔐 โหมดผู้ดูแลระบบ (เหรัญญิก)</h2>
+                    <p class="text-indigo-200 text-sm mt-1">จัดการตรวจสอบสลิปและยอดเงิน (122 คน)</p>
+                </div>
+                <div class="text-right">
+                    <p class="text-xs text-indigo-200">เงินทั้งหมดในรุ่น</p>
+                    <h3 id="admin-total-fund" class="text-2xl font-bold">0 บาท</h3>
+                </div>
+            </div>
+
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 space-y-4">
+                <h3 class="font-bold text-gray-900">✏️ แก้ไขยอดเงินทั้งหมดในรุ่น</h3>
+                <div class="flex gap-3 items-center">
+                    <input type="number" id="total-fund-input" placeholder="ยอดเงินทั้งหมด" class="px-4 py-2 border rounded-lg text-sm flex-grow">
+                    <button onclick="saveTotalFund()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2 rounded-lg text-sm font-medium transition">อัปเดตยอดเงิน</button>
+                </div>
+            </div>
+
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 space-y-4">
+                <h3 class="font-bold text-gray-900">💸 บันทึกประวัติการใช้จ่ายเงิน</h3>
+                <form onsubmit="handleExpense(event)" class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <input type="text" id="expense-title" required placeholder="รายการ" class="px-4 py-2 border rounded-lg text-sm">
+                    <input type="number" id="expense-amount" required placeholder="จำนวนเงิน" class="px-4 py-2 border rounded-lg text-sm">
+                    <button type="submit" class="bg-red-500 hover:bg-red-600 text-white py-2 rounded-lg text-sm font-medium transition">เพิ่มรายจ่าย</button>
+                </form>
+                <div id="expense-list" class="space-y-2 mt-3"></div>
+            </div>
+
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 space-y-4">
+                <h3 class="font-bold text-gray-900">📋 รายชื่อนักศึกษาและการชำระเงิน</h3>
+                <div class="overflow-x-auto max-h-96 overflow-y-auto">
+                    <table class="w-full text-left text-sm text-gray-600">
+                        <thead class="bg-gray-100 text-gray-700 uppercase text-xs sticky top-0">
+                            <tr>
+                                <th class="p-3">รหัส</th>
+                                <th class="p-3">ชื่อ-นามสกุล</th>
+                                <th class="p-3">ยอดจ่าย</th>
+                                <th class="p-3">สลิป</th>
+                                <th class="p-3">สถานะ</th>
+                                <th class="p-3">จัดการ</th>
+                            </tr>
+                        </thead>
+                        <tbody id="admin-student-table" class="divide-y divide-gray-100"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby2vQj3ZgefTPyqZjeR_VtV2xhxrEca5OLIFzTwDPuHXwSECbzHp8QA_ChWOJHHWQk0/exec';
+
+        let db = { totalFund: 0, students: [], expenses: [] };
+        let currentUser = null;
+
+        function showLoading(show, text = "กำลังโหลด...") {
+            document.getElementById('loading-text').innerText = text;
+            document.getElementById('loading-spinner').classList.toggle('hidden', !show);
+        }
+
+        async function fetchDB() {
+            showLoading(true);
+            try {
+                const res = await fetch(SCRIPT_URL);
+                db = await res.json();
+            } catch (err) {
+                alert('เชื่อมต่อฐานข้อมูลล้มเหลว');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        async function sendToSheet(payload) {
+            showLoading(true);
+            try {
+                await fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify(payload)
+                });
+            } catch (err) {
+                console.error(err);
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        function calculateDueAmount(student) {
+            if (student.status === 'paid') return 0;
+            const today = new Date().getDate();
+            let base = 50;
+            if (today > 17) {
+                return base + ((today - 17) * 5);
+            }
+            return base;
+        }
+
+        async function handleLogin(e) {
+            e.preventDefault();
+            const inputId = document.getElementById('student-id-input').value.trim();
+            await fetchDB(); 
+
+            if (inputId === 'June160749') {
+                currentUser = { role: 'admin' };
+                showScreen('treasurer-section');
+                renderAdmin();
+                return;
+            }
+
+            const student = db.students.find(s => String(s.id) === inputId);
+            if (student) {
+                currentUser = student;
+                showScreen('student-section');
+                renderStudent();
+            } else {
+                alert('ไม่พบรหัสนักศึกษานี้ในระบบ');
+            }
+        }
+
+        function showScreen(sectionId) {
+            document.getElementById('login-section').classList.add('hidden');
+            document.getElementById('student-section').classList.add('hidden');
+            document.getElementById('treasurer-section').classList.add('hidden');
+            document.getElementById(sectionId).classList.remove('hidden');
+            document.getElementById('user-info-header').classList.remove('hidden');
+            document.getElementById('nav-username').innerText = currentUser.role === 'admin' ? 'เหรัญญิก' : currentUser.name;
+        }
+
+        function logout() {
+            currentUser = null;
+            document.getElementById('user-info-header').classList.add('hidden');
+            document.getElementById('student-id-input').value = '';
+            showScreen('login-section');
+        }
+
+        function renderStudent() {
+            document.getElementById('student-name').innerText = currentUser.name;
+            document.getElementById('student-id-display').innerText = `รหัส: ${currentUser.id}`;
+
+            const due = calculateDueAmount(currentUser);
+            document.getElementById('calculated-due').innerText = `${due} บาท`;
+
+            const today = new Date().getDate();
+            if (today > 17 && currentUser.status !== 'paid') {
+                document.getElementById('fine-note').innerText = `*เกินกำหนดวันที่ 17 มีค่าปรับล่าช้า วันละ 5 บาท (รวมค่าปรับแล้ว)`;
+            } else {
+                document.getElementById('fine-note').innerText = `*กำหนดชำระวันที่ 10 - 17 ของเดือน`;
+            }
+
+            const badge = document.getElementById('payment-status-badge');
+            if (currentUser.status === 'paid') {
+                badge.className = "px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700";
+                badge.innerText = "🟢 ชำระเรียบร้อยแล้ว";
+                document.getElementById('upload-box').classList.add('hidden');
+            } else if (currentUser.status === 'pending') {
+                badge.className = "px-3 py-1 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-700";
+                badge.innerText = "🟡 รอตรวจสอบสลิป";
+                document.getElementById('upload-box').classList.remove('hidden');
+            } else {
+                badge.className = "px-3 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-700";
+                badge.innerText = "🔴 ยังไม่ชำระเงิน";
+                document.getElementById('upload-box').classList.remove('hidden');
+            }
+
+            document.getElementById('total-fund').innerText = `${(db.totalFund || 0).toLocaleString()} บาท`;
+
+            const studentExpTable = document.getElementById('student-expense-table');
+            studentExpTable.innerHTML = db.expenses.length === 0 ? '<tr><td colspan="2" class="p-3 text-center text-gray-400">ยังไม่มีรายการ</td></tr>' : '';
+            db.expenses.forEach(item => {
+                studentExpTable.innerHTML += `<tr class="border-b"><td class="p-3">${item.title}</td><td class="p-3 text-right text-red-500">-${item.amount.toLocaleString()} ฿</td></tr>`;
+            });
+        }
+
+        async function submitSlip() {
+            const fileInput = document.getElementById('slip-file');
+            if (fileInput.files.length === 0) {
+                alert('กรุณาเลือกรูปสลิปก่อน');
+                return;
+            }
+
+            const file = fileInput.files[0];
+            showLoading(true, "กำลังย่อขนาดและอัปโหลดสลิป...");
+
+            const reader = new FileReader();
+            reader.onload = async function(e) {
+                const img = new Image();
+                img.src = e.target.result;
+                img.onload = async function() {
+                    const canvas = document.createElement('canvas');
+                    let width = img.width, height = img.height;
+                    if (width > 800) { height = Math.round((height * 800) / width); width = 800; }
+                    canvas.width = width; canvas.height = height;
+                    canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+                    
+                    try {
+                        const response = await fetch(SCRIPT_URL, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                            body: JSON.stringify({
+                                action: 'uploadSlip',
+                                id: currentUser.id,
+                                fileName: file.name,
+                                mimeType: 'image/jpeg',
+                                file: canvas.toDataURL('image/jpeg', 0.7)
+                            })
+                        });
+                        
+                        const resData = await response.json();
+                        
+                        currentUser.status = 'pending';
+                        if (resData.fileUrl) {
+                            currentUser.slip = resData.fileUrl;
+                        }
+
+                        alert('ส่งสลิปสำเร็จ! รอเหรัญญิกตรวจสอบ');
+                        renderStudent();
+                    } catch (err) {
+                        alert('ส่งสลิปสำเร็จ');
+                        currentUser.status = 'pending';
+                        renderStudent();
+                    } finally {
+                        showLoading(false);
+                    }
+                };
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function renderAdmin() {
+            document.getElementById('total-fund-input').value = db.totalFund || 0;
+            document.getElementById('admin-total-fund').innerText = `${(db.totalFund || 0).toLocaleString()} บาท`;
+
+            const tbody = document.getElementById('admin-student-table');
+            tbody.innerHTML = '';
+
+            db.students.forEach(s => {
+                let statusBadge = s.status === 'paid' ? '<span class="text-green-600">จ่ายแล้ว</span>' :
+                                  s.status === 'pending' ? '<span class="text-yellow-600">รอตรวจ</span>' : '<span class="text-red-500">ยังไม่จ่าย</span>';
+                let slipLink = (s.slip && s.slip.startsWith('http')) ? `<a href="${s.slip}" target="_blank" class="text-indigo-600 underline">ดูสลิป</a>` : '-';
+
+                tbody.innerHTML += `
+                    <tr class="border-b">
+                        <td class="p-3">${s.id}</td>
+                        <td class="p-3">${s.name}</td>
+                        <td class="p-3">${calculateDueAmount(s)} ฿</td>
+                        <td class="p-3">${slipLink}</td>
+                        <td class="p-3">${statusBadge}</td>
+                        <td class="p-3 space-x-1">
+                            ${s.status === 'pending' ? `<button onclick="approvePayment('${s.id}')" class="bg-green-500 text-white px-2 py-1 rounded text-xs">อนุมัติ</button>` : ''}
+                            <button onclick="togglePaid('${s.id}')" class="bg-gray-200 text-gray-700 px-2 py-1 rounded text-xs">สลับ</button>
+                        </td>
+                    </tr>`;
+            });
+
+            const expList = document.getElementById('expense-list');
+            expList.innerHTML = db.expenses.length === 0 ? '<p class="text-xs text-gray-400">ยังไม่มีรายการ</p>' : '';
+            db.expenses.forEach((item, index) => {
+                expList.innerHTML += `<div class="flex justify-between items-center bg-gray-50 p-2 rounded text-sm"><span>${item.title} (-${item.amount} ฿)</span><button onclick="removeExpense(${index})" class="text-red-500 text-xs">ลบ</button></div>`;
+            });
+        }
+
+        async function saveTotalFund() {
+            const val = parseFloat(document.getElementById('total-fund-input').value) || 0;
+            db.totalFund = val;
+            await sendToSheet({ action: 'updateTotalFund', totalFund: val });
+            renderAdmin();
+            alert('อัปเดตยอดเงินแล้ว');
+        }
+
+        async function approvePayment(id) {
+            const s = db.students.find(item => String(item.id) === String(id));
+            if (s) {
+                s.status = 'paid';
+                await sendToSheet({ action: 'updateStudentStatus', id: id, status: 'paid' });
+                renderAdmin();
+            }
+        }
+
+        async function togglePaid(id) {
+            const s = db.students.find(item => String(item.id) === String(id));
+            if (s) {
+                s.status = s.status === 'paid' ? 'unpaid' : 'paid';
+                await sendToSheet({ action: 'updateStudentStatus', id: id, status: s.status });
+                renderAdmin();
+            }
+        }
+
+        async function handleExpense(e) {
+            e.preventDefault();
+            const title = document.getElementById('expense-title').value;
+            const amount = parseFloat(document.getElementById('expense-amount').value);
+            db.expenses.push({ title, amount });
+            await sendToSheet({ action: 'addExpense', title: title, amount: amount });
+            document.getElementById('expense-title').value = '';
+            document.getElementById('expense-amount').value = '';
+            renderAdmin();
+        }
+
+        async function removeExpense(index) {
+            db.expenses.splice(index, 1);
+            await sendToSheet({ action: 'removeExpense', index: index });
+            renderAdmin();
+        }
+    </script>
+</body>
+</html>
